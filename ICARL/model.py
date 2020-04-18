@@ -50,7 +50,7 @@ class iCaRLNet(nn.Module):
         self.exemplar_means = []
 
     def forward(self, x):
-        print(x.shape)
+#         print(x.shape)
         x = self.feature_extractor(x)
 #         x = self.fc2(x)
         x = self.bn(x)
@@ -124,7 +124,7 @@ class iCaRLNet(nn.Module):
         # Compute and cache features for each example
         features = []
         for img in images:
-            x = Variable(transform(Image.fromarray(img)), volatile=True).cuda()
+            x = Variable(transform(img), volatile=True).cuda()
             feature = self.feature_extractor(x.unsqueeze(0)).data.cpu().numpy()
             feature = feature / np.linalg.norm(feature) # Normalize
             features.append(feature[0])
@@ -189,7 +189,7 @@ class iCaRLNet(nn.Module):
         for indices, images, labels in loader:
             images = Variable(images).cuda()
             indices = indices.cuda()
-            g = F.sigmoid(self.forward(images))
+            g = torch.sigmoid(self.forward(images))
             q[indices] = g.data
         q = Variable(q).cuda()
 
@@ -211,7 +211,7 @@ class iCaRLNet(nn.Module):
 
                 # Distilation loss for old classes
                 if self.n_known > 0:
-                    g = F.sigmoid(g)
+                    g = torch.sigmoid(g)
                     q_i = q[indices]
                     dist_loss = sum(self.dist_loss(g[:,y], q_i[:,y])\
                             for y in range(self.n_known))
@@ -221,6 +221,6 @@ class iCaRLNet(nn.Module):
                 loss.backward()
                 optimizer.step()
 
-                if (i+1) % 10 == 0:
+                if (i+1) % 100 == 0:
                     print ('Epoch [%d/%d], Iter [%d/%d] Loss: %.4f' 
                            %(epoch+1, num_epochs, i+1, len(dataset)//batch_size, loss.item()))
