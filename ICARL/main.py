@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-
+from custom_data_loader import mnist
 from data_loader import iCIFAR10, iCIFAR100
 from model import iCaRLNet
 
@@ -31,7 +31,7 @@ def show_images(images):
 
 # Hyper Parameters
 total_classes = 10
-num_classes = 10
+num_classes = 3
 
 
 transform = transforms.Compose([
@@ -48,23 +48,25 @@ transform_test = transforms.Compose([
 
 # Initialize CNN
 K = 2000 # total number of exemplars
-icarl = iCaRLNet(2048, 1)
+icarl = iCaRLNet(2048, 3)
 icarl.cuda()
 
 
 for s in range(0, total_classes, num_classes):
     # Load Datasets
     print ("Loading training examples for classes", range(s, s+num_classes))
-    train_set = iCIFAR10(root='./data',
-                         train=True,
+#     train_set = iCIFAR10(root='./data',
+#                          train=True,
+#                          classes=range(s,s+num_classes),
+#                          download=True,
+#                          transform=transform_test)
+    train_set = mnist(train=True,
                          classes=range(s,s+num_classes),
-                         download=True,
                          transform=transform_test)
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=100,
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64,
                                                shuffle=True, num_workers=2)
 
-    test_set = iCIFAR10(root='./data',
-                         train=False,
+    test_set = mnist(train=False,
                          classes=range(num_classes),
                          download=True,
                          transform=transform_test)
@@ -92,7 +94,7 @@ for s in range(0, total_classes, num_classes):
         #show_images(P_y[:10])
 
     icarl.n_known = icarl.n_classes
-    print ("iCaRL classes: %d" % icarl.n_known)
+    print ("mnist classes: %d" % icarl.n_known)
 
     total = 0.0
     correct = 0.0

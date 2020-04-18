@@ -19,9 +19,12 @@ class iCaRLNet(nn.Module):
     def __init__(self, feature_size, n_classes):
         # Network architecture
         super(iCaRLNet, self).__init__()
-        self.feature_extractor = EfficientNet.from_pretrained('efficientnet-b2')
+#         self.feature_extractor = EfficientNet.from_pretrained('efficientnet-b2')
+        self.feature_extractor = resnet18()
+        
+        
         self.feature_extractor.fc =\
-            nn.Linear(self.feature_extractor._fc.in_features, feature_size)
+            nn.Linear(self.feature_extractor.fc.in_features, feature_size)
         self.bn = nn.BatchNorm1d(feature_size, momentum=0.01)
         self.ReLU = nn.ReLU()
         self.fc = nn.Linear(feature_size, n_classes, bias=False)
@@ -47,8 +50,9 @@ class iCaRLNet(nn.Module):
         self.exemplar_means = []
 
     def forward(self, x):
+        print(x.shape)
         x = self.feature_extractor(x)
-        x = self.fc2(x)
+#         x = self.fc2(x)
         x = self.bn(x)
         x = self.ReLU(x)
         x = self.fc(x)
