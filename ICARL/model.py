@@ -9,10 +9,10 @@ from PIL import Image
 from resnet import resnet18
 import sys
 sys.path.insert(0, '../EfficientNet-PyTorch/')
-from efficientnet_pytorch import EfficientNet
+# from efficientnet_pytorch import EfficientNet
 # Hyper Parameters
-num_epochs = 50
-batch_size = 100
+num_epochs = 5
+batch_size = 128
 learning_rate = 0.002
 
 class iCaRLNet(nn.Module):
@@ -84,12 +84,13 @@ class iCaRLNet(nn.Module):
             for P_y in self.exemplar_sets:
                 features = []
                 # Extract feature for each exemplar in P_y
-                for ex in P_y:
-                    ex = Variable(transform(Image.fromarray(ex)), volatile=True).cuda()
-                    feature = self.feature_extractor(ex.unsqueeze(0))
-                    feature = feature.squeeze()
-                    feature.data = feature.data / feature.data.norm() # Normalize
-                    features.append(feature)
+                with torch.no_grad():
+                    for ex in P_y:
+                        ex = Variable(transform(ex)).cuda()
+                        feature = self.feature_extractor(ex.unsqueeze(0))
+                        feature = feature.squeeze()
+                        feature.data = feature.data / feature.data.norm() # Normalize
+                        features.append(feature)
                 features = torch.stack(features)
                 mu_y = features.mean(0).squeeze()
                 mu_y.data = mu_y.data / mu_y.data.norm() # Normalize
@@ -110,6 +111,7 @@ class iCaRLNet(nn.Module):
         feature = feature.expand_as(means) # (batch_size, feature_size, n_classes)
 
         dists = (feature - means).pow(2).sum(1).squeeze() #(batch_size, n_classes)
+#         print(dists.shape)
         _, preds = dists.min(1)
 
         return preds
@@ -123,11 +125,12 @@ class iCaRLNet(nn.Module):
         """
         # Compute and cache features for each example
         features = []
-        for img in images:
-            x = Variable(transform(img), volatile=True).cuda()
-            feature = self.feature_extractor(x.unsqueeze(0)).data.cpu().numpy()
-            feature = feature / np.linalg.norm(feature) # Normalize
-            features.append(feature[0])
+        with torch.no_grad():
+            for img in images:
+                x = Variable(transform(img)).cuda()
+                feature = self.feature_extractor(x.unsqueeze(0)).data.cpu().numpy()
+                feature = feature / np.linalg.norm(feature) # Normalize
+                features.append(feature[0])
 
         features = np.array(features)
         class_mean = np.mean(features, axis=0)
@@ -135,7 +138,8 @@ class iCaRLNet(nn.Module):
 
         exemplar_set = []
         exemplar_features = [] # list of Variables of shape (feature_size,)
-        for k in range(m):
+#         print(m)
+        for k in range(int(m)):
             S = np.sum(exemplar_features, axis=0)
             phi = features
             mu = class_mean

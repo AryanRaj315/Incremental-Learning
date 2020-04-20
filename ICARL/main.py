@@ -63,21 +63,21 @@ for s in range(0, total_classes, num_classes):
     train_set = mnist(train=True,
                          classes=range(s,s+num_classes),
                          transform=transform_test)
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64,
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=128,
                                                shuffle=True, num_workers=2)
 
     test_set = mnist(train=False,
                          classes=range(num_classes),
                          download=True,
                          transform=transform_test)
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=100,
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=128,
                                                shuffle=True, num_workers=2)
 
 
 
     # Update representation via BackProp
     icarl.update_representation(train_set)
-    m = K / icarl.n_classes
+    m = int(K / icarl.n_classes)
 
     # Reduce exemplar sets for known classes
     icarl.reduce_exemplar_sets(m)
@@ -100,6 +100,7 @@ for s in range(0, total_classes, num_classes):
     correct = 0.0
     for indices, images, labels in train_loader:
         images = Variable(images).cuda()
+        print("images shape before going to classify: ", images.shape)
         preds = icarl.classify(images, transform_test)
         total += labels.size(0)
         correct += (preds.data.cpu() == labels).sum()
