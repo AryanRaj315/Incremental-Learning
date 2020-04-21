@@ -5,15 +5,32 @@ import torch.optim as optim
 from torch.autograd import Variable
 import numpy as np
 from PIL import Image
-
+import os
 from resnet import resnet18
 import sys
 sys.path.insert(0, '../EfficientNet-PyTorch/')
 # from efficientnet_pytorch import EfficientNet
 # Hyper Parameters
-num_epochs = 5
-batch_size = 128
+num_epochs = 50
+batch_size = 32
 learning_rate = 0.002
+try:
+    import sys
+    sys.path.insert(0, 'ICARL/over9000/')
+    from ralamb import Ralamb
+    from radam import RAdam
+    from ranger import Ranger
+    from lookahead import LookaheadAdam
+    from over9000 import Over9000
+except:
+    os.system(f"""git clone https://github.com/mgrankin/over9000.git""")
+    import sys
+    sys.path.insert(0, 'over9000/')
+    from ralamb import Ralamb
+    from radam import RAdam
+    from ranger import Ranger
+    from lookahead import LookaheadAdam
+    from over9000 import Over9000
 
 class iCaRLNet(nn.Module):
     def __init__(self, feature_size, n_classes):
@@ -40,8 +57,7 @@ class iCaRLNet(nn.Module):
         # Learning method
         self.cls_loss = nn.CrossEntropyLoss()
         self.dist_loss = nn.BCELoss()
-        self.optimizer = optim.Adam(self.parameters(), lr=learning_rate,
-                                    weight_decay=0.00001)
+        self.optimizer = Ranger(self.parameters())
         #self.optimizer = optim.SGD(self.parameters(), lr=2.0,
         #                           weight_decay=0.00001)
 

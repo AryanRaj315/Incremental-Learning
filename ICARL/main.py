@@ -31,7 +31,7 @@ def show_images(images):
 
 # Hyper Parameters
 total_classes = 10
-num_classes = 3
+num_classes = 4
 
 
 transform = transforms.Compose([
@@ -47,7 +47,7 @@ transform_test = transforms.Compose([
 ])
 
 # Initialize CNN
-K = 2000 # total number of exemplars
+K = 500 # total number of exemplars
 icarl = iCaRLNet(2048, 3)
 icarl.cuda()
 
@@ -100,7 +100,7 @@ for s in range(0, total_classes, num_classes):
     correct = 0.0
     for indices, images, labels in train_loader:
         images = Variable(images).cuda()
-        print("images shape before going to classify: ", images.shape)
+#         print("images shape before going to classify: ", images.shape)
         preds = icarl.classify(images, transform_test)
         total += labels.size(0)
         correct += (preds.data.cpu() == labels).sum()
